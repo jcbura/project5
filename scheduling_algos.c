@@ -62,6 +62,7 @@ void merge_sort(task_t arr[], int left, int right) {
 
 /*
  * First Come First Serve (FCFS) scheduling policy.
+ * to run "./scheduler task.list FCFS"
  */
 void fcfs_policy(task_t arr[], int count) {
     printf("============================================================\n");
@@ -70,21 +71,21 @@ void fcfs_policy(task_t arr[], int count) {
     int arr_count = 0;
     int finished_tasks = 0;
 
+    int total_waiting = 0;
+    int total_response = 0;
+    int total_turnaround = 0;
+    int cpu_usage = 0;
+
     task_t new_arr[count];
 
     /* can't set indexes of task_t array to null so we have empty_task */
-    task_t empty_task = {.pid = 0, .arrival_time = 0, .burst_time = 0, .remaining_time = 0};
+    task_t empty_task = {.pid = 1000, .arrival_time = 1000, .burst_time = 1000, .remaining_time = 1000};
 
     int response_times[count];
     for (int i = 0; i < count; i++) {
         new_arr[i] = empty_task;
         response_times[i] = -1;
     }
-
-    int total_waiting = 0;
-    int total_response = 0;
-    int total_turnaround = 0;
-    int cpu_usage = 0;
 
     while (finished_tasks < count) {
         for (int i = arr_count; i < count; i++) {
@@ -100,10 +101,18 @@ void fcfs_policy(task_t arr[], int count) {
                 total_response += response_times[new_arr[0].pid - 1];
             }
 
-            printf("<time %d> process %d is running\n", time, new_arr[0].pid);
-            new_arr[0].remaining_time--;
+            /* actual process running */
+            if (new_arr[0].pid != 1000) {
+                printf("<time %d> process %d is running\n", time, new_arr[0].pid);
+                new_arr[0].remaining_time--;
+                cpu_usage++;
+            }
+            /* our empty task we're using as a null placeholder */
+            else {
+                printf("<time %d> no processes running\n", time);
+            }
             time++;
-            cpu_usage++;
+
         }
 
         if (new_arr[0].remaining_time == 0) {
@@ -140,6 +149,7 @@ void fcfs_policy(task_t arr[], int count) {
 
 /*
  * Round Robin (RR) scheduling policy.
+ * to run "./scheduler task.list RR <time_quantum>"
  */
 void rr_policy(task_t arr[], int count, int quantum) {
     printf("============================================================\n");
@@ -147,6 +157,7 @@ void rr_policy(task_t arr[], int count, int quantum) {
     int time = 0;
     int arr_count = 0;
     int finished_tasks = 0;
+    bool first_population = true;
 
     int total_waiting = 0;
     int total_response = 0;
@@ -158,7 +169,7 @@ void rr_policy(task_t arr[], int count, int quantum) {
     int rear = -1;
 
     /* can't set indexes of task_t array to null so we have empty_task */
-    task_t empty_task = {.pid = 0, .arrival_time = 0, .burst_time = 0, .remaining_time = 0};
+    task_t empty_task = {.pid = 1000, .arrival_time = 1000, .burst_time = 1000, .remaining_time = 1000};
 
     int response_times[count];
     for (int i = 0; i < count; i++) {
@@ -167,12 +178,23 @@ void rr_policy(task_t arr[], int count, int quantum) {
     }
 
     while (finished_tasks < count) {
-        for (int i = 0; i < count; i++) {
-            if (arr[i].arrival_time == time) {
-                circular_arr[i] = arr[i];
-                rear = i;
-                arr_count++;
+        /* only want first procces(es) to arrive to access this loop */
+        if (first_population) {
+            for (int i = 0; i < count; i++) {
+                if (arr[i].arrival_time == time) {
+                    circular_arr[i] = arr[i];
+                    rear = i;
+                    arr_count++;
+                    first_population = false;
+                }
             }
+        }
+
+        /* no processes have arrived so go restart while loop */
+        if (circular_arr[time].pid == 1000 && first_population) {
+            printf("<time %d> no processes running\n", time);
+            time++;
+            continue;
         }
 
         task_t *current_task = &circular_arr[front];
@@ -185,9 +207,9 @@ void rr_policy(task_t arr[], int count, int quantum) {
             }
 
             printf("<time %d> process %d is running\n", time, current_task->pid);
-            time++;
-            task_quantum--;
             current_task->remaining_time--;
+            task_quantum--;
+            time++;
             cpu_usage++;
 
             for (int i = arr_count; i < count; i++) {
@@ -233,6 +255,7 @@ void rr_policy(task_t arr[], int count, int quantum) {
 
 /*
  * Shortest Remaining Time First (SRTF) scheduling policy.
+ * to run "./scheduler task.list SRTF"
  */
 void srtf_policy(task_t arr[], int count) {
     printf("============================================================\n");
@@ -241,18 +264,19 @@ void srtf_policy(task_t arr[], int count) {
     int arr_count = 0;
     int finished_tasks = 0;
 
-    task_t new_arr[count];
-
-    /* can't set indexes of task_t array to null so we have empty_task */
-    task_t empty_task = {.pid = 0, .arrival_time = 0, .burst_time = 0, .remaining_time = 0};
-
     int total_waiting = 0;
     int total_response = 0;
     int total_turnaround = 0;
     int cpu_usage = 0;
 
+    task_t new_arr[count];
+
+    /* can't set indexes of task_t array to null so we have empty_task */
+    task_t empty_task = {.pid = 1000, .arrival_time = 1000, .burst_time = 1000, .remaining_time = 1000};
+
     int response_times[count];
     for (int i = 0; i < count; i++) {
+        new_arr[i] = empty_task;
         response_times[i] = -1;
     }
 
@@ -272,10 +296,18 @@ void srtf_policy(task_t arr[], int count) {
                 total_response += response_times[new_arr[0].pid - 1];
             }
 
-            printf("<time %d> process %d is running\n", time, new_arr[0].pid);
-            new_arr[0].remaining_time--;
+            /* actual process running */
+            if (new_arr[0].pid != 1000) {
+                printf("<time %d> process %d is running\n", time, new_arr[0].pid);
+                new_arr[0].remaining_time--;
+                cpu_usage++;
+            }
+            /* our empty task we're using as a null placeholder */
+            else {
+                printf("<time %d> no processes running\n", time);
+            }
             time++;
-            cpu_usage++;
+
         }
 
         if (new_arr[0].remaining_time == 0) {
