@@ -190,7 +190,7 @@ void rr_policy(task_t arr[], int count, int quantum) {
             }
         }
 
-        /* no processes have arrived so go restart while loop */
+        /* no processes have arrived so restart while loop */
         if (circular_arr[time].pid == 1000 && first_population) {
             printf("<time %d> no processes running\n", time);
             time++;
